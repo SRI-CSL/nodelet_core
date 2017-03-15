@@ -52,6 +52,7 @@
 #include "nodelet/NodeletList.h"
 #include "nodelet/NodeletLoad.h"
 #include "nodelet/NodeletUnload.h"
+#include "ros/url.h"
 
 std::string genId()
 {
@@ -259,17 +260,32 @@ void nodeletLoaderSigIntHandler(int sig)
 // handler for a "shutdown" XML-RPC call.
 void shutdownCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
 {
-  int num_params = 0;
-  if (params.getType() == XmlRpc::XmlRpcValue::TypeArray)
-    num_params = params.size();
-  if (num_params > 1)
-  {
-    std::string reason = params[1];
-    ROS_WARN("Shutdown request received. Reason: [%s]", reason.c_str());
-    request_shutdown = 1;
-  }
+  (void)params;
+  result = ros::xmlrpc::responseInt(0, "Deprecated function", 0);
+  std::cerr << "Deprecated function call in function " << __func__ << " in file " << __FILE__ << std::endl;
+}
 
-  result = ros::xmlrpc::responseInt(1, "", 0);
+void shutdownCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result, XmlRpc::XmlRpcClientInfo& client_info)
+{
+  std::string g_uri = ros::master::getURI();
+  printf( "[xmlrpc_cpp] Received shutdown from %s (master uri is %s)\n", client_info.ip.c_str(), g_uri.c_str() );
+  if ( !is_uri_match( g_uri, client_info.ip ) ) {
+    printf( "[xmlrpc_cpp] shutdown request *not* from master. Ignored.\n" );
+    result = ros::xmlrpc::responseInt(0, "Client not authorized", 0);
+  }
+  else {
+    int num_params = 0;
+    if (params.getType() == XmlRpc::XmlRpcValue::TypeArray)
+      num_params = params.size();
+    if (num_params > 1)
+    {
+      std::string reason = params[1];
+      ROS_WARN("Shutdown request received. Reason: [%s]", reason.c_str());
+      request_shutdown = 1;
+    }
+
+    result = ros::xmlrpc::responseInt(1, "", 0);
+  }
 }
 
 /* ---[ */
@@ -326,7 +342,7 @@ int
     // Override default exit handlers for roscpp
     signal(SIGINT, nodeletLoaderSigIntHandler);
     ros::XMLRPCManager::instance()->unbind("shutdown");
-    ros::XMLRPCManager::instance()->bind("shutdown", shutdownCallback);
+    ros::XMLRPCManager::instance()->bind("shutdown", static_cast<void (*)(XmlRpc::XmlRpcValue& , XmlRpc::XmlRpcValue& , XmlRpc::XmlRpcClientInfo& )>(&shutdownCallback));
     
     if (arg_parser.isBondEnabled())
       bond.start();

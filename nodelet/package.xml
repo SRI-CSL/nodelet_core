@@ -9,8 +9,9 @@
     This package provides both the nodelet base class needed for
     implementing a nodelet, as well as the NodeletLoader class used
     for instantiating nodelets.
+    This version has been modified to be compatible with Secure ROS.
   </description>
-  <maintainer email="mikael@osrfoundation.org">Mikael Arguedas</maintainer>
+  <maintainer email="aravind@ai.sri.com">Mikael Arguedas</maintainer>
   <license>BSD</license>
 
   <url type="website">http://ros.org/wiki/nodelet</url>
@@ -18,6 +19,7 @@
   <url type="repository">https://github.com/ros/nodelet_core</url>
   <author>Tully Foote</author>
   <author>Radu Bogdan Rusu</author>
+  <author>Aravind Sundaresan</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
